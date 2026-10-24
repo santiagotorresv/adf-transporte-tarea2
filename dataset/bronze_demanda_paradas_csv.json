@@ -6,7 +6,7 @@
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
-			"name": "bronze"
+			"name": "bronze/csv"
 		},
 		"annotations": [],
 		"type": "DelimitedText",
