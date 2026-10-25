@@ -1,0 +1,143 @@
+{
+	"name": "df_bronze_rutas",
+	"properties": {
+		"folder": {
+			"name": "bronze"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "bronze_rutas_csv",
+						"type": "DatasetReference"
+					},
+					"name": "csv"
+				},
+				{
+					"dataset": {
+						"referenceName": "bronze_Rutas_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sql"
+				},
+				{
+					"dataset": {
+						"referenceName": "bronze_rutas2022_xls",
+						"type": "DatasetReference"
+					},
+					"name": "xls"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "dw_bronze_rutas",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select1"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "union1"
+				},
+				{
+					"name": "union2"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          cod_ruta as string,",
+				"          nombre_ruta as string,",
+				"          origen as string,",
+				"          destino as string,",
+				"          fecha_desde as string,",
+				"          fecha_hasta as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> csv",
+				"source(output(",
+				"          AnioFuente as string,",
+				"          RutaHistoricaId as string,",
+				"          CodigoRuta as string,",
+				"          NombreRuta as string,",
+				"          Origen as string,",
+				"          Destino as string,",
+				"          VigenciaDesde as string,",
+				"          VigenciaHasta as string,",
+				"          Estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> sql",
+				"source(output(",
+				"          cod_ruta as string,",
+				"          nombre_ruta as string,",
+				"          origen as string,",
+				"          destino as string,",
+				"          fecha_desde as string,",
+				"          fecha_hasta as string,",
+				"          estado as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> xls",
+				"csv select(mapColumn(",
+				"          CodigoRuta = cod_ruta,",
+				"          NombreRuta = nombre_ruta,",
+				"          Origen = origen,",
+				"          Destino = destino,",
+				"          VigenciaDesde = fecha_desde,",
+				"          VigenciaHasta = fecha_hasta,",
+				"          Estado = estado",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select1",
+				"xls select(mapColumn(",
+				"          CodigoRuta = cod_ruta,",
+				"          NombreRuta = nombre_ruta,",
+				"          Origen = origen,",
+				"          Destino = destino,",
+				"          VigenciaDesde = fecha_desde,",
+				"          VigenciaHasta = fecha_hasta,",
+				"          Estado = estado",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"select1, sql union(byName: true)~> union1",
+				"union1, select2 union(byName: true)~> union2",
+				"union2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          AnioFuente as string,",
+				"          RutaHistoricaId as string,",
+				"          CodigoRuta as string,",
+				"          NombreRuta as string,",
+				"          Origen as string,",
+				"          Destino as string,",
+				"          VigenciaDesde as string,",
+				"          VigenciaHasta as string,",
+				"          Estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}
