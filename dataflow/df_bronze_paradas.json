@@ -46,10 +46,13 @@
 					"name": "select2"
 				},
 				{
-					"name": "union1"
+					"name": "union2"
 				},
 				{
-					"name": "union2"
+					"name": "lookup1"
+				},
+				{
+					"name": "select3"
 				}
 			],
 			"scriptLines": [
@@ -119,8 +122,26 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select2",
-				"select1, sql union(byName: true)~> union1",
-				"union1, select2 union(byName: true)~> union2",
+				"select3, select2 union(byName: true)~> union2",
+				"select1, sql lookup(select1@ParadaHistoricaId == sql@ParadaHistoricaId,",
+				"     multiple: false,",
+				"     pickup: 'first',",
+				"     asc(AnioFuente, false),",
+				"     broadcast: 'auto')~> lookup1",
+				"lookup1 select(mapColumn(",
+				"          ParadaHistoricaId = select1@ParadaHistoricaId,",
+				"          NombreParada = select1@NombreParada,",
+				"          Zona = select1@Zona,",
+				"          Latitud = select1@Latitud,",
+				"          Longitud = select1@Longitud,",
+				"          VigenciaDesde = select1@VigenciaDesde,",
+				"          VigenciaHasta = select1@VigenciaHasta,",
+				"          Estado = select1@Estado,",
+				"          AnioFuente,",
+				"          CodigoPublicado",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select3",
 				"union2 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
@@ -139,6 +160,7 @@
 				"     insertable:true,",
 				"     updateable:false,",
 				"     upsertable:false,",
+				"     truncate:true,",
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
