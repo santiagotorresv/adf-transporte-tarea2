@@ -17,6 +17,10 @@
 			],
 			"sinks": [
 				{
+					"dataset": {
+						"referenceName": "dw_silver_rutas_sql",
+						"type": "DatasetReference"
+					},
 					"name": "sink1"
 				}
 			],
@@ -26,6 +30,9 @@
 				},
 				{
 					"name": "derivedColumn2"
+				},
+				{
+					"name": "filtrarRutasValidas"
 				}
 			],
 			"scriptLines": [
@@ -44,12 +51,45 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> source1",
-				"source1 derive() ~> derivedColumn1",
-				"derivedColumn1 derive() ~> derivedColumn2",
-				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"source1 derive(RutaHistoricaId = trim(RutaHistoricaId),",
+				"          CodigoRuta = upper(trim(CodigoRuta)),",
+				"          NombreRuta = trim(NombreRuta),",
+				"          Origen = trim(Origen),",
+				"          Destino = trim(Destino),",
+				"          Estado = upper(trim(Estado))) ~> derivedColumn1",
+				"derivedColumn1 derive(VigenciaDesde = toDate(trim(VigenciaDesde), 'dd/MM/yyyy'),",
+				"          VigenciaHasta = toDate(trim(VigenciaHasta), 'dd/MM/yyyy')) ~> derivedColumn2",
+				"derivedColumn2 filter(!isNull(RutaHistoricaId) && trim(RutaHistoricaId) != '' && upper(trim(RutaHistoricaId)) != 'NULL') ~> filtrarRutasValidas",
+				"filtrarRutasValidas sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
+				"     input(",
+				"          RutaHistoricaId as string,",
+				"          CodigoRuta as string,",
+				"          NombreRuta as string,",
+				"          Origen as string,",
+				"          Destino as string,",
+				"          VigenciaDesde as date,",
+				"          VigenciaHasta as date,",
+				"          Estado as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> sink1"
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          RutaHistoricaId,",
+				"          CodigoRuta,",
+				"          NombreRuta,",
+				"          Origen,",
+				"          Destino,",
+				"          VigenciaDesde,",
+				"          VigenciaHasta,",
+				"          Estado",
+				"     )) ~> sink1"
 			]
 		}
 	}
