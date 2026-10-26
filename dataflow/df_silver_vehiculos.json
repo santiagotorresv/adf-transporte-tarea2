@@ -30,6 +30,9 @@
 				},
 				{
 					"name": "derivedColumn2"
+				},
+				{
+					"name": "aggregate1"
 				}
 			],
 			"scriptLines": [
@@ -54,7 +57,15 @@
 				"derivedColumn1 derive(CapacidadEfectiva = toInteger(trim(CapacidadEfectiva)),",
 				"          VigenciaDesde = iif(instr(VigenciaDesde, '/') > 0, toDate(VigenciaDesde, 'dd/MM/yyyy'), toDate(VigenciaDesde, 'yyyy-MM-dd')),",
 				"          VigenciaHasta = iif(instr(VigenciaHasta, '/') > 0, toDate(VigenciaHasta, 'dd/MM/yyyy'), toDate(VigenciaHasta, 'yyyy-MM-dd'))) ~> derivedColumn2",
-				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"derivedColumn2 aggregate(groupBy(VehiculoId),",
+				"     AnioFuente = first(AnioFuente),",
+				"          Placa = first(Placa),",
+				"          TipoVehiculo = first(TipoVehiculo),",
+				"          CapacidadEfectiva = first(CapacidadEfectiva),",
+				"          VigenciaDesde = first(VigenciaDesde),",
+				"          VigenciaHasta = first(VigenciaHasta),",
+				"          Estado = first(Estado)) ~> aggregate1",
+				"aggregate1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          VehiculoId as string,",
