@@ -159,7 +159,7 @@
 					{
 						"activity": "df_viajes",
 						"dependencyConditions": [
-							"Succeeded"
+							"Completed"
 						]
 					}
 				],
