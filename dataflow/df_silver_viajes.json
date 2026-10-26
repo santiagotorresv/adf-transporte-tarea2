@@ -30,6 +30,12 @@
 				},
 				{
 					"name": "derivedColumn2"
+				},
+				{
+					"name": "eliminarDuplicadosViajes"
+				},
+				{
+					"name": "filtrarTotales"
 				}
 			],
 			"scriptLines": [
@@ -53,14 +59,26 @@
 				"source1 derive(ViajeId = trim(ViajeId),",
 				"          RutaHistoricaId = upper(trim(RutaHistoricaId)),",
 				"          VehiculoId = upper(trim(VehiculoId)),",
-				"          EstadoViaje = upper(trim(EstadoViaje))) ~> derivedColumn1",
-				"derivedColumn1 derive(FechaServicio = toDate(trim(FechaServicio), 'yyyy-MM-dd'),",
-				"          HoraProgramada = toTimestamp(trim(HoraProgramada), 'yyyy-MM-dd HH:mm:ss'),",
-				"          HoraSalida = toTimestamp(trim(HoraSalida), 'yyyy-MM-dd HH:mm:ss'),",
-				"          HoraLlegada = toTimestamp(trim(HoraLlegada), 'yyyy-MM-dd HH:mm:ss'),",
-				"          ValidacionesTarjeta = toInteger(trim(ValidacionesTarjeta)),",
-				"          KmRecorridos = toDecimal(trim(KmRecorridos), 10, 2)) ~> derivedColumn2",
-				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"          EstadoViaje = coalesce(upper(trim(EstadoViaje)), '')) ~> derivedColumn1",
+				"derivedColumn1 derive(FechaServicio = iif(instr(trim(FechaServicio), '/') > 0, toDate(trim(FechaServicio), 'dd/MM/yyyy'), toDate(trim(FechaServicio), 'yyyy-MM-dd')),",
+				"          HoraProgramada = iif(length(trim(toString(HoraProgramada))) == 5, iif(instr(toString(FechaServicio), '/') > 0, toTimestamp(concat(toString(FechaServicio), ' ', trim(toString(HoraProgramada))), 'dd/MM/yyyy HH:mm'), toTimestamp(concat(toString(FechaServicio), ' ', trim(toString(HoraProgramada))), 'yyyy-MM-dd HH:mm')), iif(instr(toString(HoraProgramada), '/') > 0, toTimestamp(trim(toString(HoraProgramada)), 'dd/MM/yyyy HH:mm:ss'), toTimestamp(trim(toString(HoraProgramada)), 'yyyy-MM-dd HH:mm:ss'))),",
+				"          HoraSalida = iif(length(trim(toString(HoraSalida))) == 5, iif(instr(toString(FechaServicio), '/') > 0, toTimestamp(concat(toString(FechaServicio), ' ', trim(toString(HoraSalida))), 'dd/MM/yyyy HH:mm'), toTimestamp(concat(toString(FechaServicio), ' ', trim(toString(HoraSalida))), 'yyyy-MM-dd HH:mm')), iif(instr(toString(HoraSalida), '/') > 0, toTimestamp(trim(toString(HoraSalida)), 'dd/MM/yyyy HH:mm:ss'), toTimestamp(trim(toString(HoraSalida)), 'yyyy-MM-dd HH:mm:ss'))),",
+				"          HoraLlegada = iif(length(trim(toString(HoraLlegada))) == 5, iif(instr(toString(FechaServicio), '/') > 0, toTimestamp(concat(toString(FechaServicio), ' ', trim(toString(HoraLlegada))), 'dd/MM/yyyy HH:mm'), toTimestamp(concat(toString(FechaServicio), ' ', trim(toString(HoraLlegada))), 'yyyy-MM-dd HH:mm')), iif(instr(toString(HoraLlegada), '/') > 0, toTimestamp(trim(toString(HoraLlegada)), 'dd/MM/yyyy HH:mm:ss'), toTimestamp(trim(toString(HoraLlegada)), 'yyyy-MM-dd HH:mm:ss'))),",
+				"          ValidacionesTarjeta = coalesce(toInteger(trim(ValidacionesTarjeta)), 0),",
+				"          KmRecorridos = coalesce(toDecimal(trim(KmRecorridos), 10, 2), toDecimal('0.00', 10, 2))) ~> derivedColumn2",
+				"derivedColumn2 aggregate(groupBy(ViajeId),",
+				"     AnioFuente = first(AnioFuente),",
+				"          RutaHistoricaId = first(RutaHistoricaId, true()),",
+				"          VehiculoId = first(VehiculoId, true()),",
+				"          FechaServicio = first(FechaServicio),",
+				"          HoraProgramada = first(HoraProgramada),",
+				"          HoraSalida = first(HoraSalida),",
+				"          HoraLlegada = first(HoraLlegada),",
+				"          ValidacionesTarjeta = first(ValidacionesTarjeta),",
+				"          KmRecorridos = first(KmRecorridos),",
+				"          EstadoViaje = first(EstadoViaje)) ~> eliminarDuplicadosViajes",
+				"eliminarDuplicadosViajes filter(ViajeId != 'TOTAL_OPERACION' && ViajeId != 'TOTAL_CANCELADOS') ~> filtrarTotales",
+				"filtrarTotales sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          ViajeId as string,",

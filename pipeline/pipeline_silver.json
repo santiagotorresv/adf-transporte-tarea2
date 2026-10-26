@@ -29,11 +29,42 @@
 				}
 			},
 			{
-				"name": "Data flow1",
+				"name": "df_rutas",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
 						"activity": "Script1",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_silver_rutas",
+						"type": "DataFlowReference"
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "df_paradas",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "df_rutas",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -60,11 +91,11 @@
 				}
 			},
 			{
-				"name": "Data flow2",
+				"name": "df_vehiculos",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
-						"activity": "Data flow1",
+						"activity": "df_paradas",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -91,11 +122,11 @@
 				}
 			},
 			{
-				"name": "Data flow3",
+				"name": "df_viajes",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
-						"activity": "Data flow2",
+						"activity": "df_vehiculos",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -122,11 +153,11 @@
 				}
 			},
 			{
-				"name": "Data flow4",
+				"name": "df_demandaParadas",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
-						"activity": "Data flow3",
+						"activity": "df_viajes",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -153,11 +184,11 @@
 				}
 			},
 			{
-				"name": "Data flow5",
+				"name": "df_incidentes",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [
 					{
-						"activity": "Data flow4",
+						"activity": "df_demandaParadas",
 						"dependencyConditions": [
 							"Succeeded"
 						]
@@ -174,37 +205,6 @@
 				"typeProperties": {
 					"dataflow": {
 						"referenceName": "df_solver_incidentes",
-						"type": "DataFlowReference"
-					},
-					"compute": {
-						"coreCount": 8,
-						"computeType": "General"
-					},
-					"traceLevel": "Fine"
-				}
-			},
-			{
-				"name": "Data flow6",
-				"type": "ExecuteDataFlow",
-				"dependsOn": [
-					{
-						"activity": "Data flow5",
-						"dependencyConditions": [
-							"Succeeded"
-						]
-					}
-				],
-				"policy": {
-					"timeout": "0.12:00:00",
-					"retry": 0,
-					"retryIntervalInSeconds": 30,
-					"secureOutput": false,
-					"secureInput": false
-				},
-				"userProperties": [],
-				"typeProperties": {
-					"dataflow": {
-						"referenceName": "df_silver_rutas",
 						"type": "DataFlowReference"
 					},
 					"compute": {
