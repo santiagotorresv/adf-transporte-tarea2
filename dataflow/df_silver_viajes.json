@@ -1,0 +1,88 @@
+{
+	"name": "df_silver_viajes",
+	"properties": {
+		"folder": {
+			"name": "silver"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "dw_bronze_viajes_sql",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "dw_silver_viajes_sql",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "derivedColumn2"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          AnioFuente as string,",
+				"          ViajeId as string,",
+				"          RutaHistoricaId as string,",
+				"          VehiculoId as string,",
+				"          FechaServicio as string,",
+				"          HoraProgramada as string,",
+				"          HoraSalida as string,",
+				"          HoraLlegada as string,",
+				"          ValidacionesTarjeta as string,",
+				"          KmRecorridos as string,",
+				"          EstadoViaje as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> source1",
+				"source1 derive(ViajeId = trim(ViajeId),",
+				"          RutaHistoricaId = upper(trim(RutaHistoricaId)),",
+				"          VehiculoId = upper(trim(VehiculoId)),",
+				"          EstadoViaje = upper(trim(EstadoViaje))) ~> derivedColumn1",
+				"derivedColumn1 derive(FechaServicio = toDate(trim(FechaServicio), 'yyyy-MM-dd'),",
+				"          HoraProgramada = toTimestamp(trim(HoraProgramada), 'yyyy-MM-dd HH:mm:ss'),",
+				"          HoraSalida = toTimestamp(trim(HoraSalida), 'yyyy-MM-dd HH:mm:ss'),",
+				"          HoraLlegada = toTimestamp(trim(HoraLlegada), 'yyyy-MM-dd HH:mm:ss'),",
+				"          ValidacionesTarjeta = toInteger(trim(ValidacionesTarjeta)),",
+				"          KmRecorridos = toDecimal(trim(KmRecorridos), 10, 2)) ~> derivedColumn2",
+				"derivedColumn2 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          ViajeId as string,",
+				"          RutaHistoricaId as string,",
+				"          VehiculoId as string,",
+				"          FechaServicio as date,",
+				"          HoraProgramada as timestamp,",
+				"          HoraSalida as timestamp,",
+				"          HoraLlegada as timestamp,",
+				"          ValidacionesTarjeta as integer,",
+				"          KmRecorridos as decimal(8,1),",
+				"          EstadoViaje as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}
